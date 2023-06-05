@@ -60,7 +60,7 @@ void hough(const Mat &src, Mat &dst){
     
 
     /**
-     * Dovrò estrarre dallo spazio di voto le celle che hanno un numero di voti maggiore di una certa soglia (Hth).
+     * Dovrò estrarre dallo spazio di voto le celle che hanno un numero di voti maggiore di una certa soglia (houghTH).
     */
 
     dst = src.clone();
