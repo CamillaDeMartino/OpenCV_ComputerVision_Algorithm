@@ -10,25 +10,20 @@ void canny(const Mat& src, Mat& dst){
     //Primo passo: Sfocare (smoothing dell'immagine con la Gaussiana)
 
     Mat gaussBlur;
-    copyMakeBorder(src, gaussBlur, 1, 1, 1, 1, BORDER_REFLECT);
-    GaussianBlur(gaussBlur, gaussBlur, Size(3,3), 0, 0);
+    GaussianBlur(src, gaussBlur, Size(3,3), 0, 0);
 
 
     //Secondo passo: Calcolare la magnitudo e l'orientazione del gradiente
-
     //  Gradiente
     Mat sobelX, sobelY;
-    Sobel(gaussBlur, sobelX, CV_32FC1, 1, 0);
-    Sobel(gaussBlur, sobelY, CV_32FC1, 0, 1);
+    Sobel(gaussBlur, sobelX, src.type(), 1, 0);
+    Sobel(gaussBlur, sobelY, src.type(), 0, 1);
 
     //  Magnitudo
     Mat dX, dY, mag;
-    // pow(sobelX, 2, dX);
-    // pow(sobelY, 2, dY);
-    // sqrt(dX+dY, mag);
-
-    mag.convertTo(mag,CV_32FC1);
     mag = abs(sobelX) + abs(sobelY);
+    sobelX.convertTo(sobelX, CV_32FC1);
+    sobelY.convertTo(sobelY, CV_32FC1);
 
     // Angolo di fase
     Mat magNorm, orientation;
@@ -39,8 +34,8 @@ void canny(const Mat& src, Mat& dst){
     //Terzo passo: Applicare la non maxima suppression
     Mat maxSupp;    // = Mat::zeros(magNorm.rows,magNorm.cols, magNorm.type());
     magNorm.copyTo(maxSupp);
-    normalize(orientation, orientation, -180, 180, NORM_MINMAX);
 
+    copyMakeBorder(maxSupp, maxSupp, 1, 1, 1, 1, BORDER_CONSTANT, Scalar(0));
 
     /**
      * Per ogni pixel (i,j), che è il pixel centrale che sto considerando nell’intorno, verifico se è 
@@ -50,26 +45,29 @@ void canny(const Mat& src, Mat& dst){
     */
     for(int i = 1; i < magNorm.rows-1; i++){
         for(int j = 1; j < magNorm.cols-1; j++){
+
+            float ang_val = orientation.at<float>(i, j) > 180 ? orientation.at<float>(i, j) - 360 : orientation.at<float>(i, j);
+
             //orizzontale
-            if(orientation.at<float>(i,j) > -22.5 && orientation.at<float>(i,j) <= 22.5 || orientation.at<float>(i,j) <= -157.5 && orientation.at<float>(i,j) > 157.5 ){
+            if(ang_val > -22.5 && ang_val <= 22.5 || ang_val <= -157.5 && ang_val > 157.5 ){
                 if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i,j + 1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i,j - 1)){
                     maxSupp.at<uchar>(i,j) = 0;
                 }
             }
             //-45
-            else if(orientation.at<float>(i,j) > 22.5 && orientation.at<float>(i,j) <= 67.5 || orientation.at<float>(i,j) > -157.5 && orientation.at<float>(i,j) <= -112.5 ){
+            else if(ang_val > 22.5 && ang_val <= 67.5 || ang_val > -157.5 && ang_val <= -112.5 ){
                 if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i + 1, j + 1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i - 1,j - 1)){
                     maxSupp.at<uchar>(i,j) = 0;
                 }
             }
             //+45
-            else if(orientation.at<float>(i,j) > 112.5 && orientation.at<float>(i,j) <= 157.5 || orientation.at<float>(i,j) > -67.5 && orientation.at<float>(i,j) <= -22.5 ){
+            else if(ang_val > 112.5 && ang_val <= 157.5 || ang_val > -67.5 && ang_val <= -22.5 ){
                 if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i - 1, j + 1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i + 1,j - 1)){
                     maxSupp.at<uchar>(i,j) = 0;
                 }
             }
             //verticale
-            else if(orientation.at<float>(i,j) > 67.5 && orientation.at<float>(i,j) <= 112.5 || orientation.at<float>(i,j) <= -67.5 && orientation.at<float>(i,j) > -112.5 ){
+            else if(ang_val > 67.5 && ang_val <= 112.5 || ang_val <= -67.5 && ang_val > -112.5 ){
                 if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i - 1,j) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i + 1,j)){
                     maxSupp.at<uchar>(i,j) = 0;
                 }
@@ -131,9 +129,7 @@ int main(int argc, char **argv){
     createTrackbar("Trackbar th", "Canny", &ht, 255, CannyThreshold);
     createTrackbar("Trackbar lh", "Canny", &lt, 255, CannyThreshold);
     CannyThreshold(0,0);
-    
-    //canny(src, dst);
-    //imshow("Canny", dst);
+
     waitKey(0);
 
     Mat cannyCV;
