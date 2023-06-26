@@ -4,9 +4,11 @@
 using namespace cv;
 using namespace std;
 
-void convertPolar(double rho, double theta, Point& p1, Point& p2){
-    //trasformiamo le coordinate polari in coordinate cartesiane
+int ht = 135;
 
+void convertPolar(double rho, double theta, Point& p1, Point& p2){
+
+    //trasformiamo le coordinate polari in coordinate cartesiane
     int x0 = cvRound(rho * cos(theta));
     int y0 = cvRound(rho * sin(theta));
 
@@ -39,7 +41,7 @@ void hough(const Mat &src, Mat &dst){
 
 
     //Creiamo lo spazio dei voti, che sarà inizialmente una matrice di tutti 0,
-    //Questo corrisponde a considerare una possibile distanza ρ (che andrà da ρ a – ρ) (è la diagnale calcolata con hypot) 
+    //Questo corrisponde a considerare una possibile distanza ρ (che andrà da ρ a – ρ) (è la diagonale calcolata con hypot) 
     //e dei possibili angoli θ (180°), quindi la nostra quantizzazione avrà ρ unità e considererà θ angoli.
 
     int maxDist = hypot(imgCanny.rows, imgCanny.cols);
@@ -98,7 +100,7 @@ void hough(const Mat &src, Mat &dst){
 
     for(int r = 0; r < votes.rows; r++){
         for(int t = 0; t < 180; t++){
-            if(votes.at<uchar>(r, t) > 135){
+            if(votes.at<uchar>(r, t) > ht){
                 rho = r - maxDist;
                 theta = (t - 90) * CV_PI/180;
 

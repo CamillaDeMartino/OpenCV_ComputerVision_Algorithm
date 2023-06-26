@@ -4,11 +4,11 @@
 
 using namespace cv;
 Mat src, dst;
-int ht = 100,lt = 30;
+int ht = 100, lt = 30;
 
 void canny(const Mat& src, Mat& dst){
-    //Primo passo: Sfocare (smoothing dell'immagine con la Gaussiana)
 
+    //Primo passo: Sfocare (smoothing dell'immagine con la Gaussiana)
     Mat gaussBlur;
     GaussianBlur(src, gaussBlur, Size(3,3), 0, 0);
 
@@ -20,7 +20,7 @@ void canny(const Mat& src, Mat& dst){
     Sobel(gaussBlur, sobelY, src.type(), 0, 1);
 
     //  Magnitudo
-    Mat dX, dY, mag;
+    Mat mag;
     mag = abs(sobelX) + abs(sobelY);
     sobelX.convertTo(sobelX, CV_32FC1);
     sobelY.convertTo(sobelY, CV_32FC1);
@@ -77,7 +77,6 @@ void canny(const Mat& src, Mat& dst){
 
 
     //Quarto passo: Applicare il thresholding con isteresi
-
     for(int i=1; i<maxSupp.rows-1; i++){
 		for(int j=1; j<maxSupp.cols-1; j++){
 			if(maxSupp.at<uchar>(i,j) > ht)
@@ -88,10 +87,9 @@ void canny(const Mat& src, Mat& dst){
 				bool strong_n = false;
 				for(int l = -1; l <= 1 && !strong_n ; l++){
 					for(int k = -1; k <= 1 && !strong_n ; k++){
-						{
-							if(maxSupp.at<uchar>(i+l,j+k) > ht) 
-                                strong_n = true;
-						}
+						if(maxSupp.at<uchar>(i+l,j+k) > ht) 
+                            strong_n = true;
+					
 					}
 				}
 				if(strong_n) 
