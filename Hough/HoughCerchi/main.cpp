@@ -8,7 +8,7 @@ int Rmax = 150;
 int Rmin = 30;
 int houghTH = 100; 
 int cannyLTH = 80; 
-int cannyHTH = 300;
+int cannyHTH = 200;
 
 void hough(const Mat &src, Mat &dst){
 
@@ -29,7 +29,6 @@ void hough(const Mat &src, Mat &dst){
     */
 
     int size[] = {imgCanny.rows, imgCanny.cols, (Rmax - Rmin) + 1 };
-    //Mat votes(3, size, CV_32S, Scalar(0));
     Mat votes = Mat::zeros(3, size, CV_8UC1);
     
     /**

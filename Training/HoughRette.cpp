@@ -5,14 +5,12 @@ using namespace cv;
 using namespace std;
 
 Mat src, dst;
-int ht = 135;
+int ht = 145;
 
-void polarConvert(double rho, double theta, Point& p1, Point& p2){
+void convertPolar(double rho, double theta, Point& p1, Point& p2){
 
-    int x0, y0;
-
-    x0 = cvRound(rho * cos(theta));
-    y0 = cvRound(rho * sin(theta));
+    int x0 = cvRound(rho * cos(theta));
+    int y0 = cvRound(rho * sin(theta));
 
     int alpha = 1000;
     p1.x = cvRound(x0 + alpha * (-sin(theta)));
@@ -26,62 +24,65 @@ void polarConvert(double rho, double theta, Point& p1, Point& p2){
 
 void hough(const Mat& src, Mat& dst){
 
-    Mat blur;
+    Mat blur, imgCanny;
     GaussianBlur(src, blur, Size(3,3), 0, 0);
 
-    Mat cannyImg;
-    Canny(blur, cannyImg, 80, 300, 3);
+    Canny(blur, imgCanny, 130, 200, 3);
+    imshow("Canny", imgCanny);
+    waitKey(0);
 
     Mat votes;
-    int diagMax = hypot(cannyImg.rows, cannyImg.cols);
-    votes = Mat::zeros(diagMax*2, 180, CV_8UC1);
+    int maxDist = hypot(imgCanny.rows, imgCanny.cols);
+    votes = Mat::zeros(maxDist*2, 180, CV_8UC1);
 
-    double theta, rho;
-    for(int x = 0; x < cannyImg.rows; x++){
-        for(int y = 0; y < cannyImg.cols; y++){
-            if(cannyImg.at<uchar>(x,y) == 255){
+    double rho, theta;
+    for(int x = 0; x < imgCanny.rows; x++){
+        for(int y = 0; y < imgCanny.cols; y++){
+            if(imgCanny.at<uchar>(x,y) == 255){
                 for(theta = 0; theta < 180; theta++){
-                    rho = cvRound(y * cos((theta-90) * CV_PI/180) + x * sin((theta-90) * CV_PI/180)) + diagMax;
+                    rho = cvRound(x * sin((theta-90) * CV_PI/180) + y * cos((theta-90) * CV_PI/180)) + maxDist;
                     votes.at<uchar>(rho, theta)++;
                 }
             }
         }
     }
-
+    
 
     dst = src.clone();
-    cvtColor(dst, dst, COLOR_GRAY2BGR);
-
     Point p1, p2;
     vector<pair<Point, Point>> lines;
 
+    //cvtColor(dst, dst, COLOR_GRAY2BGR);
+
     for(int r = 0; r < votes.rows; r++){
         for(int t = 0; t < 180; t++){
-            if(votes.at<uchar>(r,t) > ht){
-                rho = r - diagMax;
+            if(votes.at<uchar>(r, t) > ht){
+                rho = r - maxDist;
                 theta = (t - 90) * CV_PI/180;
 
-                polarConvert(rho, theta, p1, p2);
-                lines.push_back(make_pair(p1,p2));
+                convertPolar(rho, theta, p1, p2);
+                lines.push_back(make_pair(p1, p2));
+
             }
         }
     }
 
+    
     for(int i = 0; i < lines.size(); i++){
         pair<Point, Point> coordinates = lines.at(i);
         line(dst, coordinates.first, coordinates.second, Scalar(0, 0, 255), 1, LINE_AA);
-
     }
+    
 }
-
 int main(int argc, char** argv){
 
-    src = imread(argv[1], IMREAD_GRAYSCALE);
+    src = imread(argv[1], IMREAD_COLOR);
 
     if( src.empty() )
         return -1;
 
     imshow("Original Img", src);
+    waitKey(0);
 
     hough(src, dst);
     imshow("Hough", dst);

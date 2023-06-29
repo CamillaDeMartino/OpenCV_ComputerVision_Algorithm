@@ -43,34 +43,29 @@ void canny(const Mat& src, Mat& dst){
      * 
      * orizzontale: i vicini sono quelli a sinistra e a destra del pixel centrale, dunque rispetto (i,j-1) e (i, j+1);
     */
-    for(int i = 1; i < magNorm.rows-1; i++){
-        for(int j = 1; j < magNorm.cols-1; j++){
-
-            float ang_val = orientation.at<float>(i, j) > 180 ? orientation.at<float>(i, j) - 360 : orientation.at<float>(i, j);
+    for(int i = 1; i < maxSupp.rows-1; i++){
+        for(int j = 1; j < maxSupp.cols-1; j++){
+            float ang = orientation.at<float>(i,j) > 180 ? orientation.at<float>(i,j) - 180 : orientation.at<float>(i,j);
 
             //orizzontale
-            if(ang_val > -22.5 && ang_val <= 22.5 || ang_val <= -157.5 && ang_val > 157.5 ){
-                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i,j + 1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i,j - 1)){
+            if( 0 <= ang && ang <= 22.5 || 157.5 < ang && ang <= 180){
+                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i, j-1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i, j+1))
                     maxSupp.at<uchar>(i,j) = 0;
-                }
-            }
-            //-45
-            else if(ang_val > 22.5 && ang_val <= 67.5 || ang_val > -157.5 && ang_val <= -112.5 ){
-                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i + 1, j + 1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i - 1,j - 1)){
+            } 
+            //verticale
+            else if( 67.5 < ang && ang <= 112.5){
+                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i - 1, j) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i + 1, j))
                     maxSupp.at<uchar>(i,j) = 0;
-                }
             }
             //+45
-            else if(ang_val > 112.5 && ang_val <= 157.5 || ang_val > -67.5 && ang_val <= -22.5 ){
-                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i - 1, j + 1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i + 1,j - 1)){
+            else if( 22.5 < ang && ang <= 67.5){
+                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i - 1, j-1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i + 1, j + 1))
                     maxSupp.at<uchar>(i,j) = 0;
-                }
             }
-            //verticale
-            else if(ang_val > 67.5 && ang_val <= 112.5 || ang_val <= -67.5 && ang_val > -112.5 ){
-                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i - 1,j) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i + 1,j)){
+            //-45
+            else if( 112.5 < ang && ang <= 157.5){
+                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i + 1, j - 1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i - 1, j + 1))
                     maxSupp.at<uchar>(i,j) = 0;
-                }
             }
         }
     }

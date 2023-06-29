@@ -35,7 +35,7 @@ void hough(const Mat &src, Mat &dst){
 
     //Trovare gli edge con Canny
     Mat imgCanny;
-    Canny(blur, imgCanny, 80, 300, 3);
+    Canny(blur, imgCanny, 100, 200, 3);
     imshow("Canny", imgCanny);
     waitKey(0);
 
