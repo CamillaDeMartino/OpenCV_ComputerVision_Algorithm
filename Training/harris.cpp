@@ -4,23 +4,20 @@
 using namespace cv;
 
 Mat src, dst;
-int ht = 70;
 
-void harris(const Mat& src, Mat& dst){
 
-    //gradiente
+void harris(const Mat& src, Mat& dst, int ht = 240){
+
     Mat dX, dY;
     Sobel(src, dX, CV_32FC1, 1, 0);
     Sobel(src, dY, CV_32FC1, 0, 1);
 
-    //derivate alla seconda
     Mat dX2, dY2, dXY;
     pow(dX, 2, dX2);
     pow(dY, 2, dY2);
     multiply(dX, dY, dXY);
 
-    //blur
-    Mat C00, C11, C01, C10;
+    Mat C00, C10, C01, C11;
     GaussianBlur(dX2, C00, Size(3,3), 0, 0);
     GaussianBlur(dY2, C11, Size(3,3), 0, 0);
     GaussianBlur(dXY, C10, Size(3,3), 0, 0);
@@ -28,40 +25,35 @@ void harris(const Mat& src, Mat& dst){
 
     //R = determinante - k*traccia^2
     double k = 0.05;
-    Mat det, traccia, R;
+    Mat traccia, det, R, C1, C2;
 
-    Mat C1, C2;
     multiply(C00, C11, C1);
-    multiply(C10, C01, C2);
+    multiply(C01, C10, C2);
 
     det = C1 - C2;
     traccia = C00 + C11;
+
     pow(traccia, 2, traccia);
     R = det - k*traccia;
 
-    //normalize
     normalize(R, dst, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
 
-
-}
-
-void HarrisThreshold(int, void*){
-
-    harris(src, dst);
+    //threshold
     Mat dst_scale;
-
     convertScaleAbs(dst, dst_scale);
 
-    for(int i = 1; i < dst.rows-1; i++){
+    for(int i = 1; i < dst.rows -1; i ++){
         for(int j = 1; j < dst.cols-1; j++){
             if(dst.at<float>(i,j) > ht)
-                circle(dst_scale, Point(j,i), 5, Scalar(0), 2, 8, 0);
+                circle(dst_scale, Point(j,i), 5, Scalar(0, 0, 255), 2, 8, 0);
         }
     }
 
-
     imshow("Harris", dst_scale);
+
 }
+
+
 
 int main(int argc, char **argv){
 
@@ -73,11 +65,7 @@ int main(int argc, char **argv){
     waitKey(0);
 
 
-    namedWindow("Harris");
-    createTrackbar("Trackbar th", "Harris", &ht, 255, HarrisThreshold);
-    HarrisThreshold(0,0);
-    //harris(src, dst);
-    //imshow("Harris", dst);
+    harris(src, dst);
     waitKey(0);
 
 

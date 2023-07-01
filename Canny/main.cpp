@@ -45,7 +45,7 @@ void canny(const Mat& src, Mat& dst){
     */
     for(int i = 1; i < maxSupp.rows-1; i++){
         for(int j = 1; j < maxSupp.cols-1; j++){
-            float ang = orientation.at<float>(i,j) > 180 ? orientation.at<float>(i,j) - 180 : orientation.at<float>(i,j);
+            float ang = orientation.at<float>(i-1,j-1) > 180 ? orientation.at<float>(i-1,j-1) - 180 : orientation.at<float>(i-1,j-1);
 
             //orizzontale
             if( 0 <= ang && ang <= 22.5 || 157.5 < ang && ang <= 180){
