@@ -10,7 +10,7 @@ vector<float> normHist(const Mat& src){
 
     for(int x = 0; x < src.rows; x++){
         for(int y = 0; y < src.cols; y++){
-            hist.at(src.at<uchar>(x,y))++;
+            hist.at(src.at<uchar>(x,y))++; 
         }
     }
 
@@ -19,6 +19,7 @@ vector<float> normHist(const Mat& src){
 
     return hist;
 }
+
 
 vector<float> probability(vector<float> hist){
 
@@ -30,6 +31,7 @@ vector<float> probability(vector<float> hist){
     }
 
     return prob;
+
 }
 
 vector<float> cumulativeAvg(vector<float> hist){
@@ -38,7 +40,7 @@ vector<float> cumulativeAvg(vector<float> hist){
     cumAvg.at(0) = hist.at(0);
 
     for(int i = 1; i < 256; i++){
-        cumAvg.at(i) = cumAvg.at(i-1) + i*hist.at(i);
+        cumAvg.at(i) = cumAvg.at(i-1) + i * hist.at(i);
     }
 
     return cumAvg;
@@ -46,15 +48,13 @@ vector<float> cumulativeAvg(vector<float> hist){
 
 float globalAvg(vector<float> hist){
 
-    float globAvg;
-    globAvg = hist.at(0);
+    float globAvg = hist.at(0);
 
     for(int i = 1; i < 256; i++){
         globAvg += i*hist.at(i);
     }
 
     return globAvg;
-
 }
 
 vector<float> interVariance(vector<float> prob, vector<float> cumAvg, float globAvg){
@@ -63,12 +63,10 @@ vector<float> interVariance(vector<float> prob, vector<float> cumAvg, float glob
     float num, denom;
 
     for(int i = 0; i < 256; i++){
-
-        num = pow(((prob.at(i)*globAvg) - cumAvg.at(i)), 2);
-        denom = prob.at(i)*(1 - prob.at(i));
+        num = pow((globAvg * prob.at(i) - cumAvg.at(i)), 2);
+        denom = prob.at(i) * (1 - prob.at(i));
 
         sigma.at(i) = denom == 0 ? 0 : num/denom;
-
     }
 
     return sigma;
@@ -80,7 +78,6 @@ int kStar(vector<float> sigma){
     int k = 0;
 
     for(int i = 1; i < 256; i++){
-
         if(sigma.at(i) > max){
             max = sigma.at(i);
             k = i;
@@ -98,14 +95,12 @@ int otsu(const Mat& src){
     vector<float> hist = normHist(blur);
     vector<float> prob = probability(hist);
     vector<float> cumAvg = cumulativeAvg(hist);
-    float globAvg = globalAvg(hist);
+    float globAvg = globalAvg(hist);    
     vector<float> sigma = interVariance(prob, cumAvg, globAvg);
     int k = kStar(sigma);
 
     return k;
-
 }
-
 
 int main(int argc, char** argv){
 

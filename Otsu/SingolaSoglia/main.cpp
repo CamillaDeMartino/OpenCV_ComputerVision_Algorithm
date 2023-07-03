@@ -93,7 +93,7 @@ float globalAvg(vector<float> hist){
 
     float globalAvg = hist.at(0);
 
-    for(int i = 0; i < 256; i++){
+    for(int i = 1; i < 256; i++){
         globalAvg += i*hist.at(i);
     }
 
