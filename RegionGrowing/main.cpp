@@ -6,6 +6,7 @@
 using namespace cv;
 using namespace std;
 
+
 /**
  * PointShift2D definisce l’8-intorno. Serviverà per analizzare i pixel adiacenti.
  * sono i punti che definiscono gli spostamenti rispetto al pixel centrale
@@ -16,13 +17,13 @@ using namespace std;
  *   1 [ ] [ ] [ ]
 */
 
+
 const Point PointShift2D[8] = 
 {
     Point(-1, -1), Point(-1, 0), Point(-1, 1),
     Point(0, -1),                Point(0, 1),
     Point(1, -1),  Point(1, 0),  Point(1, 1)
 };
-
 
 /**
  * La fase di accrescimento 
@@ -71,13 +72,13 @@ void grow(const Mat& src, const Mat& dst, Mat& mask, Point seed, int th){
                     continue;
                 }
                 //se è all'interno dell'immagine mi caloclo la distanza euclidea
-                //n.b delta, ossia la distanza è quello che hoscelto come predicato 
+                //n.b delta, ossia la distanza è quello che ho scelto come predicato 
                 // è un'immagine RGB quindi faccio la somma della “differenza delle 3 componenti al quadrato”.
             else{
 
-                int delta = int(  pow(src.at<Vec3b>(center)[0] - src.at<Vec3b>(estimatingPoint)[0], 2) 
-                                + pow(src.at<Vec3b>(center)[1] - src.at<Vec3b>(estimatingPoint)[1], 2) 
-                                + pow(src.at<Vec3b>(center)[2] - src.at<Vec3b>(estimatingPoint)[2], 2));
+                int delta = int(  pow(src.at<Vec3b>(seed)[0] - src.at<Vec3b>(estimatingPoint)[0], 2) 
+                                + pow(src.at<Vec3b>(seed)[1] - src.at<Vec3b>(estimatingPoint)[1], 2) 
+                                + pow(src.at<Vec3b>(seed)[2] - src.at<Vec3b>(estimatingPoint)[2], 2));
                 
                 if( dst.at<uchar>(estimatingPoint) == 0 &&
                     mask.at<uchar>(estimatingPoint) == 0 &&
@@ -143,7 +144,7 @@ void regionGrowing(const Mat& src, Mat& dst, double minAreaFactor,int maxRegionN
                     }               
                 }
                 else{
-                    //trooppo piccola
+                    //troppo piccola
                     dst = dst + mask * 255;
                 }
                 //azzera la maschera

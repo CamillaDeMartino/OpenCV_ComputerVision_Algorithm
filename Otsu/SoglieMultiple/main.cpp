@@ -40,7 +40,7 @@ float globalAvg(vector<float> hist){
  * Discorso simile anche per quanto riguarda le medie cumulative.
 */
 
-vector<int> kStar(const vector<float> hist, const float globalAvg){
+vector<int> kStar(vector<float> hist, float globalAvg){
     
 
     //3 probabilità P1, P2, P3

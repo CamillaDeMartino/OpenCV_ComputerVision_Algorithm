@@ -14,11 +14,14 @@ vector<float> normHist(const Mat& src){
         }
     }
 
-    for(int i = 0; i < 256; i++)
-        hist.at(i) /= src.rows*src.cols;
+    for(int i = 0; i < 256; i++){
+        hist.at(i) /= src.rows * src.cols;
+    }
 
     return hist;
+
 }
+
 
 float globalAvg(vector<float> hist){
 
@@ -31,7 +34,7 @@ float globalAvg(vector<float> hist){
     return globAvg;
 }
 
-vector<int> kStar(const vector<float> hist, const float globAvg){
+vector<int> kStar(vector<float> hist, float globAvg){
 
     vector<float> prob(3, 0.0f);
     vector<float> cumAvg(3, 0.0f);
@@ -64,7 +67,6 @@ vector<int> kStar(const vector<float> hist, const float globAvg){
                     kstar.at(1) = j;
                 }
             }
-
             prob.at(2) = cumAvg.at(2) = 0.0f;
         }
         prob.at(1) = cumAvg.at(1) = 0.0f;
@@ -72,6 +74,7 @@ vector<int> kStar(const vector<float> hist, const float globAvg){
 
     return kstar;
 }
+
 
 void myThreshold(const Mat& src, Mat& dst, vector<int> kstar){
 
@@ -85,22 +88,22 @@ void myThreshold(const Mat& src, Mat& dst, vector<int> kstar){
                 dst.at<uchar>(x,y) = 127;
         }
     }
-
 }
 
-void otsu2K(const Mat& src){
+void otsuK(const Mat& src){
 
     Mat blur;
     GaussianBlur(src, blur, Size(3,3), 0, 0);
 
     vector<float> hist = normHist(blur);
     float globAvg = globalAvg(hist);
+
     vector<int> k = kStar(hist, globAvg);
 
     Mat dst;
     myThreshold(blur, dst, k);
+    imshow("Otsu", dst);
 
-    imshow("otsu2k", dst);
 }
 
 int main(int argc, char** argv){
@@ -114,7 +117,7 @@ int main(int argc, char** argv){
 
     imshow("Original", src);
 
-    otsu2K(src);
+    otsuK(src);
     waitKey(0);
 
 
