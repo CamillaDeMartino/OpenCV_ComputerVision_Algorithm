@@ -10,14 +10,14 @@ const int maxRegion = 100;
 const double minAreaFactor = 0.001;
 
 
-const Point pointShifting2D[8] = 
+const Point pointShift2D[8] =
 {
     Point(-1, -1), Point(-1, 0), Point(-1, 1),
     Point(0, -1),                Point(0, 1),
-    Point(1, -1),  Point(1, 0),  Point(1, 1)
+    Point(1, -1), Point(1, 0), Point(1,1)
 };
 
-void grow(const Mat& src, const Mat& dst, Mat& mask, Point seed){
+void grow(const Mat& src, Mat& dst, Mat& mask, Point seed){
 
     stack<Point> pointStack;
     pointStack.push(seed);
@@ -30,39 +30,42 @@ void grow(const Mat& src, const Mat& dst, Mat& mask, Point seed){
 
         for(int i = 0; i < 8; i++){
 
-            Point estimatingPoint = center + pointShifting2D[i];
+            Point estimatingPoint = center + pointShift2D[i];
 
             if(estimatingPoint.x < 0 ||
                estimatingPoint.y < 0 ||
                estimatingPoint.x > src.cols-1 ||
                estimatingPoint.y > src.rows-1){
-                
-                continue;
-               }else{
 
-                int delta = (int)(  pow(src.at<Vec3b>(seed)[0] - src.at<Vec3b>(estimatingPoint)[0], 2)
-                                  + pow(src.at<Vec3b>(seed)[1] - src.at<Vec3b>(estimatingPoint)[1], 2)
-                                  + pow(src.at<Vec3b>(seed)[2] - src.at<Vec3b>(estimatingPoint)[2], 2)
-                                    );
-
-               if(dst.at<uchar>(estimatingPoint) == 0 &&
-                  mask.at<uchar>(estimatingPoint) == 0 &&
-                  delta < th
-                  ){
-                    pointStack.push(estimatingPoint);
-                  }
+                    continue;
                }
-        }
-    }
+            else{
 
+                int delta = (int)(  pow(src.at<Vec3b>(seed)[0] - src.at<Vec3b>(estimatingPoint)[0], 2) 
+                                  + pow(src.at<Vec3b>(seed)[1] - src.at<Vec3b>(estimatingPoint)[1], 2) 
+                                  + pow(src.at<Vec3b>(seed)[2] - src.at<Vec3b>(estimatingPoint)[2], 2));
+                
+                if(dst.at<uchar>(estimatingPoint) == 0 &&
+                   mask.at<uchar>(estimatingPoint) == 0 &&
+                   delta < th){
+
+                        pointStack.push(estimatingPoint);
+                   }
+            }
+            
+        }
+
+    }
+    
 }
 
 void RegionGrowing(const Mat& src, Mat& dst, int maxRegion, double minAreaFactor){
 
-    int minRegionA = (int)(minAreaFactor * src.cols * src.rows);
-    Mat mask = Mat::zeros(src.size(), CV_8UC1);
+    int minRegionA = (int)(minAreaFactor * src.rows * src.cols);
+
     dst = Mat::zeros(src.size(), CV_8UC1);
-    uchar label = 1; 
+    Mat mask = Mat::zeros(src.size(), CV_8UC1);
+    uchar label = 1;
 
     for(int x = 0; x < src.cols; x++){
         for(int y = 0; y < src.rows; y++){
@@ -70,34 +73,30 @@ void RegionGrowing(const Mat& src, Mat& dst, int maxRegion, double minAreaFactor
             if(dst.at<uchar>(Point(x,y)) == 0){
 
                 grow(src, dst, mask, Point(x,y));
-
                 int maskArea = (int)sum(mask).val[0];
 
-                if( maskArea > minRegionA){
-
+                if(maskArea > minRegionA){
                     dst = dst + mask*label;
 
                     imshow("Mask", mask*255);
                     waitKey(0);
 
                     if(++label > maxRegion){
-                        cout<<"Out of Region";
+                        cout<<"Out of Region"<<endl;
                         exit;
                     }
-
                 }
                 else{
                     dst = dst + mask*255;
                 }
 
-
-                mask = mask - mask;
+                mask -= mask;
             }
+            
         }
     }
 
 }
-
 
 int main(int argc, char** argv){
     

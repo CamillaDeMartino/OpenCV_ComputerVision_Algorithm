@@ -84,7 +84,6 @@ void grow(const Mat& src, const Mat& dst, Mat& mask, Point seed, int th){
                     mask.at<uchar>(estimatingPoint) == 0 &&
                     delta < th
                     ){
-                        mask.at<uchar>(estimatingPoint) = 1;
                         pointStack.push(estimatingPoint);
                     }
             }
