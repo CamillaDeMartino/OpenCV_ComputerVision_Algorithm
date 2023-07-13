@@ -5,14 +5,14 @@ using namespace cv;
 
 Mat src, dst;
 
-void canny(const Mat& src, Mat& dst, int lt = 30, int ht = 100){
+void canny(const Mat& src, Mat& dst, int lt = 30, int ht = 100 ){
 
     Mat blur;
     GaussianBlur(src, blur, Size(3,3), 0, 0);
 
-    Mat dX, dY, magn;
-    Sobel(blur, dX, CV_8UC1, 1, 0);
-    Sobel(blur, dY, CV_8UC1, 0, 1);
+    Mat magn, dX, dY;
+    Sobel(blur, dX, src.type(), 1, 0);
+    Sobel(blur, dY, src.type(), 0, 1);
     magn = abs(dX) + abs(dY);
     normalize(magn, magn, 0, 255, NORM_MINMAX);
 
@@ -23,21 +23,21 @@ void canny(const Mat& src, Mat& dst, int lt = 30, int ht = 100){
 
     Mat maxSupp;
     magn.copyTo(maxSupp);
-    copyMakeBorder(maxSupp, maxSupp, 1, 1, 1, 1, BORDER_CONSTANT);
+    copyMakeBorder(maxSupp, maxSupp, 1, 1, 1, 1, BORDER_CONSTANT, Scalar(0));
 
     for(int i = 1; i < maxSupp.rows-1; i++){
         for(int j = 1; j < maxSupp.cols-1; j++){
 
-            float ang = orientation.at<float>(i-1, j-1) >  180 ? orientation.at<float>(i-1, j-1) - 180 : orientation.at<float>(i-1, j-1);
+            float ang = orientation.at<float>(i-1, j-1) > 180 ? orientation.at<float>(i-i,j-1) - 180 : orientation.at<float>(i-1,j-1); 
 
             //orizzontale
             if(0 <= ang && ang <= 22.5 || 157.5 < ang && ang <= 180){
-                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i, j-1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i, j+1) )
+                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i, j-1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i, j+1))
                     maxSupp.at<uchar>(i,j) = 0;
             }
             //+45
             else if(22.5 < ang && ang <= 67.5){
-                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i+1, j+1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i-1, j-1))
+                if(maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i-1, j-1) || maxSupp.at<uchar>(i,j) < maxSupp.at<uchar>(i+1, j+1))
                     maxSupp.at<uchar>(i,j) = 0;
             }
             //verticale
@@ -60,24 +60,24 @@ void canny(const Mat& src, Mat& dst, int lt = 30, int ht = 100){
                 maxSupp.at<uchar>(i,j) = 255;
             else if(maxSupp.at<uchar>(i,j) < lt)
                 maxSupp.at<uchar>(i,j) = 0;
-            else if(maxSupp.at<uchar>(i,j) <= ht && maxSupp.at<uchar>(i,j) >= lt){
+            else if(maxSupp.at<uchar>(i,j) >= lt && maxSupp.at<uchar>(i,j) <= ht){
                 bool strong_e = false;
-                for(int l = -1; l <= 1 && !strong_e; l++){
-                    for(int k = -1; k <= 1 && !strong_e; k++){
-                        if(maxSupp.at<uchar>(i+l,j+k) > ht)
+                for(int k = -1; k <= 1 && !strong_e; k++){
+                    for(int l = -1; l <= 1 && !strong_e; l++ ){
+                        if(maxSupp.at<uchar>(i+k, j+l) > ht)
                             strong_e = true;
+
                     }
                 }
 
-
                 if(strong_e)
                     maxSupp.at<uchar>(i,j) = 255;
-                else 
+                else
                     maxSupp.at<uchar>(i,j) = 0;
+                
             }
         }
     }
-
 
     maxSupp.copyTo(dst);
 

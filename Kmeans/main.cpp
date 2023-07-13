@@ -16,12 +16,6 @@
 using namespace std;
 using namespace cv;
 
-struct Center{
-    double blueValue;
-    double greenValue;
-    double redValue;
-};
-
 /**
  * Questa funzione inizializza i centroidi dei cluster selezionando casualmente i pixel dell'immagine 
  * e li salva insieme alle informazioni sui punti associati a ciascun centro del cluster. 
@@ -103,7 +97,7 @@ void findAssociatedCluster(const Mat& src, int clusters_number, vector<Scalar> c
                 //pixel del cluster
                 Scalar clusterPixel = clustersCenters[k];
 
-                //distanza tra pixel e il k senter
+                //distanza tra pixel e il k center
                 double distance = computeColorDistance(pixel, clusterPixel);
 
                 //aggiorna il cluster più vicino se la distanza è minore della distanza minima attuale
@@ -120,10 +114,10 @@ void findAssociatedCluster(const Mat& src, int clusters_number, vector<Scalar> c
 }
 
 /**
- * Aggiorniamo i centri dei cluster in base alla media dei pixel associati a ciascu cluster, 
+ * Aggiorniamo i centri dei cluster in base alla media dei pixel associati a ciascun cluster, 
  * In particolare:
  *  - Per tutti i pixel di ogni cluster vengono inizializzati i canali colore a 0
- *  - Per ciascun pixel viene preso il loro valore corrispondente nell'imagine fatta la media
+ *  - Per ciascun pixel viene preso il loro valore corrispondente nell'immagine fatta la media
  *  - Viene creato un nuovo valore per il centro del cluster utilizzando i valori medi calcolati
  *  - la distanza tra il nuovo centro e il precedente viene calcolata utilizzando computeColorDistance
  *  - dividiamo il nuovo valore per il numero totale di cluster per ottenere il nuovo vaore dei centro medio
@@ -175,9 +169,9 @@ double adjustClusterCenters(const Mat& src, int clusters_number, vector<Scalar> 
  * Applichiamo i colori finali ai pixel dell'immagine di output in base ai cluster associati
 */
 
-Mat applyFinalClusterToImage(Mat& dst, int clusters_number, vector<vector<Point>> ptInClusters, vector<Scalar> &clustersCenters ){
+void applyFinalClusterToImage(Mat& dst, int clusters_number, vector<vector<Point>> ptInClusters, vector<Scalar> &clustersCenters ){
     
-    srand(time(NULL));
+    //srand(time(NULL));
 
     //assegna un colore casuale a ciascun cluster
     for(int k = 0; k < clusters_number; k++){
@@ -188,9 +182,9 @@ Mat applyFinalClusterToImage(Mat& dst, int clusters_number, vector<vector<Point>
         //Per ogni pixel nel cluster cambia il colore per adattarlo al cluster
         for(int i = 0; i < ptInCluster.size(); i++){
 
-            Scalar pixelColor = dst.at<Vec3b>(ptInCluster[i]);
+            //Scalar pixelColor = dst.at<Vec3b>(ptInCluster[i]);
             //Assegna il colore del centro del cluster come nuovo colore del pixel
-            pixelColor = clustersCenters[k];
+            Scalar pixelColor = clustersCenters[k];
 
             //Aggiorna il colore del pixel nell'immagine di output
             dst.at<Vec3b>(ptInCluster[i])[0] = pixelColor.val[0];
@@ -199,7 +193,6 @@ Mat applyFinalClusterToImage(Mat& dst, int clusters_number, vector<vector<Point>
         }
     }
 
-    return dst;
 }
 
 
@@ -216,7 +209,7 @@ int main(int argc, char** argv){
     int clusters_number = stoi(argv[2]);
 
     vector<Scalar> clustersCenters;
-    vector< vector<Point> > ptInClusters;
+    vector< vector<Point>> ptInClusters;
     double threshold = 0.1; //per stoppare le iterazioni
     double oldCenter = INFINITY;
     double newCenter = 0;
@@ -245,7 +238,7 @@ int main(int argc, char** argv){
     }
 
     Mat imgOutputKNN = src.clone();
-    imgOutputKNN = applyFinalClusterToImage(imgOutputKNN, clusters_number, ptInClusters, clustersCenters);
+    applyFinalClusterToImage(imgOutputKNN, clusters_number, ptInClusters, clustersCenters);
     imshow("Segmentation", imgOutputKNN);
     
     waitKey(0);

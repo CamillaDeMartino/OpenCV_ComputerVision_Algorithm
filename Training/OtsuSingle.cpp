@@ -14,8 +14,8 @@ vector<float> normHist(const Mat& src){
         }
     }
 
-    for(int i = 0; i < 256; i++)
-        hist.at(i) /= src.rows*src.cols;
+    for(int i = 0; i < 255; i++)
+        hist.at(i) /= src.rows * src.cols;
 
     return hist;
 }
@@ -25,9 +25,8 @@ vector<float> probability(vector<float> hist){
     vector<float> prob(256, 0.0f);
     prob.at(0) = hist.at(0);
 
-    for(int i = 1; i < 256; i++){
+    for(int i = 1; i < 256; i++)
         prob.at(i) = prob.at(i-1) + hist.at(i);
-    }
 
     return prob;
 }
@@ -37,9 +36,8 @@ vector<float> cumulativeAvg(vector<float> hist){
     vector<float> cumAvg(256, 0.0f);
     cumAvg.at(0) = hist.at(0);
 
-    for(int i = 1; i < 256; i++){
-        cumAvg.at(i) = cumAvg.at(i-1) + i * hist.at(i); 
-    }
+    for(int i = 1; i < 256; i++)
+        cumAvg.at(i) = cumAvg.at(i-1) + i * hist.at(i);
 
     return cumAvg;
 }
@@ -48,9 +46,8 @@ float globalAvg(vector<float> hist){
 
     float globAvg = hist.at(0);
 
-    for(int i = 1; i < 256; i++){
+    for(int i = 1; i < 256; i++)
         globAvg += i*hist.at(i);
-    }
 
     return globAvg;
 }
@@ -61,11 +58,10 @@ vector<float> interVariance(vector<float> prob, vector<float> cumAvg, float glob
     float num, denom;
 
     for(int i = 0; i < 256; i++){
-        
-        num = pow(((prob.at(i) * globAvg) - cumAvg.at(i)), 2);
+        num = pow((prob.at(i)*globAvg) - cumAvg.at(i), 2);
         denom = prob.at(i) * (1 - prob.at(i));
 
-        sigma.at(i) = denom == 0 ? 0 : num/denom; 
+        sigma.at(i) = denom == 0 ? 0 : num/denom;
     }
 
     return sigma;
@@ -73,12 +69,13 @@ vector<float> interVariance(vector<float> prob, vector<float> cumAvg, float glob
 
 int kStar(vector<float> sigma){
 
-    float maxVariance = sigma.at(0);
+    float max = sigma.at(0);
     int k = 0;
 
     for(int i = 1; i < 256; i++){
-        if( sigma.at(i) > maxVariance){
-            maxVariance = sigma.at(i);
+
+        if(sigma.at(i) > max){
+            max = sigma.at(i);
             k = i;
         }
     }
@@ -99,7 +96,10 @@ int otsu(const Mat& src){
     int k = kStar(sigma);
 
     return k;
+    
 }
+
+
 
 int main(int argc, char** argv){
 
