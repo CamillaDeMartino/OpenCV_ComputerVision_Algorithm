@@ -1,7 +1,7 @@
 /**
  * L’algoritmo di Split and Merge può essere nei seguenti passi
  *  1. dividere in quattro quadranti tutte le regioni per cui il predicato Q risulta falso;
- *  2. dopo la fase di split, si applica il processo di merging a tutte le regioni adiacenti R i e Rj, per cui Q(Ri U Rj) = Vero;
+ *  2. dopo la fase di split, si applica il processo di merging a tutte le regioni adiacenti Ri e Rj, per cui Q(Ri U Rj) = Vero;
  *  3. il processo termina quando non è più possibile effettuare unioni.
  * 
  * Solitamente si definisce una dimensione minima della regione oltre la quale non si effettua lo split
@@ -145,9 +145,9 @@ TNode *split(Mat &img, Rect R){
  * Come flag per indicare che tutta la regione deve essere unita imposto a true tutti i valori booleani dell’array MergedB.
  * 
  * Se la regione è stata splittata, verifico se posso fare delle unioni: il procedimento è analogo per ogni if
- *  - Nel primo if provo ad unire Upper Left e Upper Righ. 
+ *  - Nel primo if provo ad unire Upper Left e Upper Right. 
  *      Per verificare se queste due regioni possono essere unite dobbiamo prendere in considerazione la deviazione standard
- *      stddev della regione e verificare se entrambe sono minori di una certa threshold.
+ *      stddev della regione e verificare se entrambe sono minori di una certa threshold (N.B in questo caaso si utilizza anche la media).
  *      Se così fosse, inserisco ambo le regioni nell’array merged e imposto ambo i corrispettivi booleani di mergedB a true.
  *  - Avendo unito queste posso anche verificare se posso unire Lower Left e Lower Right. 
  *    Se non posso, richiamo ricorsivamente il merge su di loro
@@ -314,7 +314,6 @@ int main(int argc, char** argv){
     int s = pow(2.0, (double)exponent);
     Rect square = Rect(0,0, s,s);
     src = src(square).clone();
-    Mat srcMer=src.clone();
     Mat srcSeg=src.clone();
 
     TNode *root = split(src, Rect(0,0, src.rows, src.cols));

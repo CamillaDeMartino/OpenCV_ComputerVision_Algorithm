@@ -5,15 +5,15 @@
 using namespace std;
 using namespace cv;
 
-const int th = 200;
 const int maxRegion = 100;
-const double minAreaFactor = 0.001;
+const double minareaFactor = 0.001;
+const int th = 100;
 
-const Point shiftingPoint[8] = 
+const Point pointShift[8] = 
 {
-    Point(-1, -1), Point(-1, 0), Point(-1, 1),
-    Point(0, -1),                Point(0, 1),
-    Point(1, 1),   Point(1, 0),  Point(1, 1)
+    Point(-1,-1), Point(-1, 0), Point(-1, 1),
+    Point(0, -1),               Point(0, 1),
+    Point(1,1),  Point(1, 0),   Point(1,1)
 };
 
 void grow(const Mat& src, Mat& dst, Mat& mask, Point seed){
@@ -28,8 +28,7 @@ void grow(const Mat& src, Mat& dst, Mat& mask, Point seed){
         pointStack.pop();
 
         for(int i = 0; i < 8; i++){
-
-            Point estimatingPoint = center + shiftingPoint[i];
+            Point estimatingPoint = center + pointShift[i];
 
             if(estimatingPoint.x < 0 ||
                estimatingPoint.y < 0 ||
@@ -39,54 +38,61 @@ void grow(const Mat& src, Mat& dst, Mat& mask, Point seed){
                }
             else{
 
-                int delta = (int) pow(src.at<Vec3b>(seed)[0] - src.at<Vec3b>(estimatingPoint)[0], 2)
-                                + pow(src.at<Vec3b>(seed)[1] - src.at<Vec3b>(estimatingPoint)[1], 2)
-                                + pow(src.at<Vec3b>(seed)[2] - src.at<Vec3b>(estimatingPoint)[2], 2);
+                int delta = (int) (  pow(src.at<Vec3b>(seed)[0] - src.at<Vec3b>(estimatingPoint)[0], 2)
+                                   + pow(src.at<Vec3b>(seed)[1] - src.at<Vec3b>(estimatingPoint)[1], 2)
+                                   + pow(src.at<Vec3b>(seed)[2] - src.at<Vec3b>(estimatingPoint)[2], 2)
+                                   );
 
-                if( delta < th &&
-                    dst.at<uchar>(estimatingPoint) == 0 &&
-                    mask.at<uchar>(estimatingPoint) == 0){
+                if(dst.at<uchar>(estimatingPoint) == 0 &&
+                   mask.at<uchar>(estimatingPoint) == 0 &&
+                   delta < th){
                     pointStack.push(estimatingPoint);
-                } 
+                   }
+                
             }
         }
-    }
 
+    }
 }
 
+void RegionGrowing(const Mat& src, Mat& dst){
 
-void RegionGrowing(const Mat& src, Mat& dst, int maxRegion, double minAreaFactor){
-
-    int minRegionA = (int)(minAreaFactor * src.rows * src.cols);
+    int minRegionA = (int)(src.rows * src.cols * minareaFactor);
     dst = Mat::zeros(src.size(), CV_8UC1);
     Mat mask = Mat::zeros(src.size(), CV_8UC1);
     uchar label = 1;
 
     for(int x = 0; x < src.cols; x++){
         for(int y = 0; y < src.rows; y++){
+
             if(dst.at<uchar>(Point(x,y)) == 0){
 
                 grow(src, dst, mask, Point(x,y));
-                int maskA = (int)sum(mask).val[0];
+                int maskSize = sum(mask).val[0];
 
-                if(maskA > minRegionA){
-
+                if(maskSize > minRegionA){
                     dst = dst + mask * label;
+
                     imshow("mask", mask*255);
                     waitKey(0);
 
-                    if(++label > maxRegion)
-                        cout<<"Out of Region";
+                    if(++label > maxRegion){
+                        cout<<"Out Of Region";
+                        return ;
+                    }
                 }
-                else 
-                    dst = dst + mask*255;
-                
-                mask -= mask;
+                else{
+                    dst = dst + mask * 255;
+                }
 
+                mask -= mask;
+                
             }
         }
     }
+
 }
+
 
 int main(int argc, char** argv){
     
@@ -105,7 +111,8 @@ int main(int argc, char** argv){
     waitKey(0);
 
     //GaussianBlur(src, src, Size(7,7), 0, 0);
-    RegionGrowing(src, dst, maxRegion, minAreaFactor);
+    RegionGrowing(src, dst);
+
 
     imshow("RegionGr", dst);
     waitKey(0);
