@@ -6,25 +6,27 @@
 using namespace std;
 using namespace cv;
 
-void createClusterInfo(const Mat& src, int clustersNum, vector<Scalar> &clusterCenters, vector<vector<Point>> &ptInClusters){
+void createClusterInfo(const Mat& src, int clustersNum, vector<Scalar> &clustersCenters, vector<vector<Point>> &ptInClusters){
 
     RNG random(getTickCount());
 
     for(int k = 0; k < clustersNum; k++){
+        
+        Point pixel;
+        pixel.x = random.uniform(0, src.cols);
+        pixel.y = random.uniform(0, src.rows);
 
-        Point center;
-        center.x = random.uniform(0, src.cols);
-        center.y = random.uniform(0, src.rows);
+        Scalar pixelImg = src.at<Vec3b>(pixel);
+        Scalar center(pixelImg.val[0], pixelImg.val[1], pixelImg.val[2]);
 
-        Scalar centerPixel = src.at<Vec3b>(center.y, center.x);
-        Scalar centerColor(centerPixel.val[0], centerPixel.val[1], centerPixel.val[2]);
-
-        clusterCenters.push_back(centerColor);
-
-        vector<Point> ptInCluster;
-        ptInClusters.push_back(ptInCluster);
+        clustersCenters.push_back(center);
+        vector<Point> ptInClusterK;
+        ptInClusters.push_back(ptInClusterK);
+        
     }
+
 }
+
 
 double colorDistance(Scalar pixel, Scalar pixelCluster){
 
@@ -43,6 +45,7 @@ void findKCluster(const Mat& src, int clustersNum, vector<Scalar> &clustersCente
 
             double minDistance = INFINITY;
             int indexClosestCluster = 0;
+
             Scalar pixel = src.at<Vec3b>(x,y);
 
             for(int k = 0; k < clustersNum; k++){
@@ -56,61 +59,66 @@ void findKCluster(const Mat& src, int clustersNum, vector<Scalar> &clustersCente
             }
 
             ptInClusters[indexClosestCluster].push_back(Point(y,x));
-
         }
     }
 }
 
-double fixCenterClusters(const Mat& src, int clustersNum, vector<Scalar> &clustersCenters, vector<vector<Point>> &ptInClusters, double &oldValue, double newValue){
 
-    double diffChange;
+double fixCenterCluster(const Mat& src, int clustersNum, vector<Scalar> &clustersCenters, vector<vector<Point>> &ptInClusters, double& oldValue, double newValue){
 
+    double diffChange; 
     for(int k = 0; k < clustersNum; k++){
 
         double newBlue = 0;
         double newGreen = 0;
         double newRed = 0;
-        vector<Point> ptInClusterK = ptInClusters[k];
+        vector<Point> ptInClusterk = ptInClusters[k];
 
-        for(int i = 0; i < ptInClusterK.size(); i++){
+        for(int i = 0; i < ptInClusterk.size(); i++){
 
-            Scalar pixel = src.at<Vec3b>(ptInClusterK[i].y, ptInClusterK[i].x);
+            Scalar pixel = src.at<Vec3b>(ptInClusterk[i]);
+
             newBlue += pixel.val[0];
             newGreen += pixel.val[1];
             newRed += pixel.val[2];
         }
 
-        newBlue /= ptInClusterK.size();
-        newGreen /= ptInClusterK.size();
-        newRed /= ptInClusterK.size();
+        newBlue /= ptInClusterk.size();
+        newGreen /= ptInClusterk.size();
+        newRed /= ptInClusterk.size();
 
-        Scalar newCenter(newBlue, newGreen, newRed);
-        newValue += colorDistance(newCenter, clustersCenters[k]);
-        clustersCenters[k] = newCenter;
+        Scalar center(newBlue, newGreen, newRed);
+        newValue += colorDistance(center, clustersCenters[k]);
+        clustersCenters[k] = center;
+
     }
 
     newValue /= clustersNum;
     diffChange = abs(oldValue - newValue);
     oldValue = newValue;
-
+    
     return diffChange;
 }
 
-void applyCluster(Mat& dst, int clustersNum, vector<Scalar> &clustersCenters, vector<vector<Point>> &ptInClusters){
+
+void applyChanges(Mat& dst, int clustersNum, vector<Scalar> &clustersCenters, vector<vector<Point>> &ptInClusters){
 
     for(int k = 0; k < clustersNum; k++){
 
-        vector<Point> ptInClusterK = ptInClusters[k];
+        vector<Point> ptInClusterk = ptInClusters[k];
 
-        for(int i = 0; i < ptInClusterK.size(); i++){
+        for(int i = 0; i < ptInClusterk.size(); i++){
 
-            Scalar pixel = clustersCenters[k];
+            Scalar pixelColor = clustersCenters[k];
 
-            dst.at<Vec3b>(ptInClusterK[i])[0] = pixel.val[0];
-            dst.at<Vec3b>(ptInClusterK[i])[1] = pixel.val[1];
-            dst.at<Vec3b>(ptInClusterK[i])[2] = pixel.val[2];
+            dst.at<Vec3b>(ptInClusterk[i])[0] = pixelColor.val[0];
+            dst.at<Vec3b>(ptInClusterk[i])[1] = pixelColor.val[1];
+            dst.at<Vec3b>(ptInClusterk[i])[2] = pixelColor.val[2];
+
         }
     }
+
+
 }
 
 int main(int argc, char** argv){
@@ -123,7 +131,6 @@ int main(int argc, char** argv){
     imshow("Original img", src);
 
     int clustersNum = stoi(argv[2]);
-
     double oldValue = INFINITY;
     double newValue = 0;
     double diffChange = oldValue - newValue;
@@ -132,19 +139,21 @@ int main(int argc, char** argv){
     double th = 0.1;
 
     createClusterInfo(src, clustersNum, clustersCenters, ptInClusters);
-    Mat dst = src.clone();
 
-    while( diffChange > th ){
+    while(diffChange > th ){
+
         newValue = 0;
 
         for(int k = 0; k < clustersNum; k++)
             ptInClusters[k].clear();
 
         findKCluster(src, clustersNum, clustersCenters, ptInClusters);
-        diffChange = fixCenterClusters(src, clustersNum, clustersCenters, ptInClusters, oldValue, newValue);
+
+        diffChange = fixCenterCluster(src, clustersNum, clustersCenters, ptInClusters, oldValue, newValue);
     }
 
-    applyCluster(dst, clustersNum, clustersCenters, ptInClusters);
+    Mat dst = src.clone();
+    applyChanges(dst, clustersNum, clustersCenters, ptInClusters);
     imshow("dst", dst);
     waitKey(0);
 
