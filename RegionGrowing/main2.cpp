@@ -1,3 +1,4 @@
+//Versione a scala di grigi
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <stack>
@@ -5,19 +6,19 @@
 using namespace std;
 using namespace cv;
 
-const int maxRegion = 110;
-const double minAreaFactor = 0.002;
-const int th = 70;
+const int maxRegion = 100;
+const double minareaFactor = 0.001;
+const int th = 30;
 
-const Point pointShift[8] = 
-{
+const Point pointShifting[8] = {
+
     Point(-1, -1), Point(-1, 0), Point(-1, 1),
     Point(0, -1),                Point(0, 1),
     Point(1, -1),  Point(1, 0),  Point(1, 1)
 };
 
 void grow(const Mat& src, Mat& dst, Mat& mask, Point seed){
-
+    
     stack<Point> pointStack;
     pointStack.push(seed);
 
@@ -28,37 +29,39 @@ void grow(const Mat& src, Mat& dst, Mat& mask, Point seed){
         pointStack.pop();
 
         for(int i = 0; i < 8; i++){
-            Point estimatingPoint = center + pointShift[i];
-        
+            Point estimatingPoint = center + pointShifting[i];
 
             if( estimatingPoint.x < 0 ||
                 estimatingPoint.y < 0 ||
-                estimatingPoint.x > src.cols-1 ||
-                estimatingPoint.y > src.rows-1){
+                estimatingPoint.x > src.cols - 1 ||
+                estimatingPoint.y > src.rows - 1){
                     continue;
                 }
             else{
-
-                int delta = (int) sqrt( pow(src.at<Vec3b>(seed)[0] - src.at<Vec3b>(estimatingPoint)[0], 2) +
-                                        pow(src.at<Vec3b>(seed)[1] - src.at<Vec3b>(estimatingPoint)[1], 2) +
-                                        pow(src.at<Vec3b>(seed)[2] - src.at<Vec3b>(estimatingPoint)[2], 2));
+                int delta = (int) sqrt( pow(src.at<uchar>(seed) - src.at<uchar>(estimatingPoint), 2) );
+                /*int delta = (int) sqrt( pow(src.at<Vec3b>(seed)[0] - src.at<Vec3b>(estimatingPoint)[0], 2) +
+                                    pow(src.at<Vec3b>(seed)[1] - src.at<Vec3b>(estimatingPoint)[1], 2) +
+                                    pow(src.at<Vec3b>(seed)[2] - src.at<Vec3b>(estimatingPoint)[2], 2)
+                                    );*/
 
                 if(dst.at<uchar>(estimatingPoint) == 0 &&
                    mask.at<uchar>(estimatingPoint) == 0 &&
                    delta < th){
                         pointStack.push(estimatingPoint);
                    }
+                
             }
         }
     }
 }
 
+
 void regionGrowing(const Mat& src, Mat& dst){
 
-    int minRegionA = (int) ( src.rows * src.cols * minAreaFactor);
+    int minRegionA = (int) (src.cols * src.rows * minareaFactor);
 
-    dst = Mat::zeros(src.size(), CV_8UC1);
-    Mat mask = Mat::zeros(src.size(), CV_8UC1);
+    dst = Mat::zeros(src.size(), CV_8U);
+    Mat mask = Mat::zeros(src.size(), CV_8U);
     uchar label = 1;
 
     for(int x = 0; x < src.cols; x++){
@@ -67,17 +70,18 @@ void regionGrowing(const Mat& src, Mat& dst){
             if(dst.at<uchar>(Point(x,y)) == 0){
 
                 grow(src, dst, mask, Point(x,y));
-                int maskArea = sum(mask).val[0];
+                int areaMask = (int)sum(mask).val[0];
 
-                if(maskArea > minRegionA){
-                    dst = dst + mask *label;
+                if(areaMask > minRegionA){
+
+                    dst = dst + mask*label;
                     imshow("mask", mask*255);
                     waitKey(0);
 
                     if(++label > maxRegion){
-                        cout<<"Out of Region"<<endl;
+                        cout<<"Out of Region";
                     }
-                
+                    
                 }
                 else{
                     dst = dst + mask * 255;
@@ -92,7 +96,7 @@ void regionGrowing(const Mat& src, Mat& dst){
 int main(int argc, char** argv){
     
     Mat src, dst;
-    src = imread(argv[1], IMREAD_COLOR);
+    src = imread(argv[1], IMREAD_GRAYSCALE);
 
     if( src.empty() )
         return -1;

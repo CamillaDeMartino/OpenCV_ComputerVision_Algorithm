@@ -4,18 +4,43 @@
 using namespace std;
 using namespace cv;
 
-vector<float> normHist(const Mat& src){
+void edgeDetection(const Mat& src, Mat& dst, int th){
+    Mat lapImg, edgeImg;
 
-    vector<float> hist(256, 0.0f);
+    Laplacian(src, lapImg, src.type());
+    convertScaleAbs(lapImg, edgeImg);
+    threshold(edgeImg, dst, th, 255, THRESH_BINARY);
+}
 
-    for(int x = 0; x < src.rows; x++){
-        for(int y = 0; y < src.cols; y++){
-            hist.at(src.at<uchar>(x,y))++;
+int pixelEdge(const Mat& edgeImg, vector<Point> &pixelEdges){
+
+    int numPixel = 0;
+
+    for(int x = 0; x < edgeImg.rows; x++){
+        for(int y = 0; y < edgeImg.cols; y++){
+            if(edgeImg.at<uchar>(x,y) == 255){
+                numPixel++;
+                Point edge;
+                edge.x = x;
+                edge.y = y;
+                pixelEdges.push_back(edge);
+            }
         }
     }
 
+    return numPixel;
+}   
+
+vector<float> normHist(const Mat& src, const vector<Point>& pixelEdges, int numPixel){
+
+    vector<float> hist(256, 0.0f);
+
+    for(auto &i : pixelEdges){
+        hist.at(src.at<uchar>(i.x, i.y))++;
+    }
+
     for(int i = 0; i < 256; i++){
-        hist.at(i) /= src.cols * src.rows;
+        hist.at(i) = numPixel > 0 ? hist.at(i)/numPixel : 0;
     }
 
     return hist;
@@ -88,12 +113,16 @@ int kStar(vector<float> sigma){
     return k;
 }
 
-int otsu(const Mat& src){
+int otsu(const Mat& src, int th){
 
-    Mat blur;
+    Mat blur, dst;
+    vector<Point> pixel;
     GaussianBlur(src, blur, Size(3,3), 0, 0);
 
-    vector<float> hist = normHist(blur);
+    edgeDetection(src, dst, th);
+    int numPixel = pixelEdge(dst, pixel);
+
+    vector<float> hist = normHist(blur, pixel, numPixel);
     vector<float> prob = probability(hist);
     vector<float> cumAvg = cumulativeAvg(hist);
     float globAvg = globalAvg(hist);
@@ -104,6 +133,8 @@ int otsu(const Mat& src){
     return k;
 
 }
+
+
 int main(int argc, char** argv){
 
     Mat src, dst;
@@ -115,7 +146,7 @@ int main(int argc, char** argv){
 
     imshow("Original", src);
 
-    threshold(src, dst, otsu(src), 255, THRESH_BINARY);
+    threshold(src, dst, otsu(src , 5), 255, THRESH_BINARY);
     imshow("Otsu", dst);
     waitKey(0);
 
